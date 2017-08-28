@@ -16,54 +16,48 @@
  * under the License.
  */
 
-package org.wso2.carbon.identity.sample.extension.keystore;
+package org.wso2.carbon.identity.sample.extension.auth;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.application.authentication.framework.AuthenticatorFlowStatus;
 import org.wso2.carbon.identity.application.authentication.framework.FederatedApplicationAuthenticator;
-import org.wso2.carbon.identity.application.authentication.framework.context.AuthHistory;
 import org.wso2.carbon.identity.application.authentication.framework.context.AuthenticationContext;
 import org.wso2.carbon.identity.application.authentication.framework.exception.AuthenticationFailedException;
 import org.wso2.carbon.identity.application.authentication.framework.exception.LogoutFailedException;
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
-import org.wso2.carbon.identity.application.common.model.Property;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * Hwk.
+ * Abstract Sample Authenticator.
  */
-public class SampleHardwareKeyAuthenticator implements FederatedApplicationAuthenticator {
+public abstract class AbstractSampleAuthenticator implements FederatedApplicationAuthenticator {
 
-    private static final long serialVersionUID = 6439291340285653402L;
-    private static final String HWK_APP_URL = "HwkAppUrl";
+    private static final Log log = LogFactory.getLog(AbstractSampleAuthenticator.class);
 
-    private static final Log log = LogFactory.getLog(SampleHardwareKeyAuthenticator.class);
-
-    @Override
-    public boolean canHandle(HttpServletRequest request) {
-        return true;
-    }
+    /**
+     * Returns the page URL.
+     * @return
+     */
+    protected abstract String getPageUrlProperty();
 
     @Override
     public AuthenticatorFlowStatus process(HttpServletRequest request, HttpServletResponse response,
             AuthenticationContext context) throws AuthenticationFailedException, LogoutFailedException {
-        log.info("Hardware Key Sample Authenticator called");
+        log.info("Sample Authenticator: \"" + getFriendlyName() + "\" called");
+        String authenticatorName = request.getParameter("authenticatorName");
         if (context.isLogoutRequest()) {
             return AuthenticatorFlowStatus.SUCCESS_COMPLETED;
-        } else if (StringUtils.isNotEmpty(request.getParameter("success"))) {
+        } else if (getName().equals(authenticatorName)) {
             return processAuthenticationResponse(request, response, context);
         } else {
             return initializeAuthentication(request, response, context);
@@ -81,9 +75,7 @@ public class SampleHardwareKeyAuthenticator implements FederatedApplicationAuthe
             AuthenticatedUser authenticatedUser = AuthenticatedUser
                     .createFederateAuthenticatedUserFromSubjectIdentifier(subject);
             context.setSubject(authenticatedUser);
-            log.info("Hardware Key Sample Authenticator successful, User : " + subject);
-            context.addAuthenticationStepHistory(
-                    new AuthHistory("SampleHardwareKeyAuthenticator", null, "HWK_EvenCall"));
+            log.info(getFriendlyName() + " successful, User : " + subject);
             return AuthenticatorFlowStatus.SUCCESS_COMPLETED;
         }
 
@@ -93,54 +85,20 @@ public class SampleHardwareKeyAuthenticator implements FederatedApplicationAuthe
     private AuthenticatorFlowStatus initializeAuthentication(HttpServletRequest request, HttpServletResponse response,
             AuthenticationContext context) throws AuthenticationFailedException {
         Map<String, String> authenticatorProperties = context.getAuthenticatorProperties();
-        String hwkUrl = authenticatorProperties.get(HWK_APP_URL);
+        String pageUrl = authenticatorProperties.get(getPageUrlProperty());
         try {
             String callbackUrl = IdentityUtil.getServerURL(FrameworkConstants.COMMONAUTH, true, true);
-            callbackUrl = callbackUrl + "?sessionDataKey=" + context.getContextIdentifier();
+            callbackUrl = callbackUrl + "?sessionDataKey=" + context.getContextIdentifier() + "&authenticatorName="
+                    + getName();
             String encodedUrl = URLEncoder.encode(callbackUrl, StandardCharsets.UTF_8.name());
 
-            response.sendRedirect(hwkUrl + "?callbackUrl=" + encodedUrl);
+            response.sendRedirect(pageUrl + "?callbackUrl=" + encodedUrl);
             return AuthenticatorFlowStatus.INCOMPLETE;
         } catch (UnsupportedEncodingException e) {
             throw new AuthenticationFailedException("Unsupported encoding exception occurred." + e.getMessage());
         } catch (IOException e) {
-            log.error("Error occurred in sending redirect to: " + hwkUrl, e);
+            log.error("Error occurred in sending redirect to: " + pageUrl, e);
             throw new AuthenticationFailedException("Error occurred in sending redirect.");
         }
-    }
-
-    @Override
-    public String getContextIdentifier(HttpServletRequest request) {
-        String identifier = request.getParameter("sessionDataKey");
-        return identifier;
-    }
-
-    @Override
-    public String getName() {
-        return "SampleHardwareKeyAuthenticator";
-    }
-
-    @Override
-    public String getFriendlyName() {
-        return "SampleHardwareKeyAuthenticator";
-    }
-
-    @Override
-    public String getClaimDialectURI() {
-        return null;
-    }
-
-    @Override
-    public List<Property> getConfigurationProperties() {
-        List<Property> configProperties = new ArrayList<>();
-
-        Property smsUrl = new Property();
-        smsUrl.setName(HWK_APP_URL);
-        smsUrl.setDisplayName("Hardware Key Sample URL");
-        smsUrl.setRequired(true);
-        smsUrl.setDescription("Enter sample HWK url value.");
-        smsUrl.setDisplayOrder(0);
-        configProperties.add(smsUrl);
-        return configProperties;
     }
 }

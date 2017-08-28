@@ -27,7 +27,7 @@ import org.wso2.carbon.identity.core.KeyStoreManagerExtension;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.service.RealmService;
 
-import java.security.Key;
+import java.security.PrivateKey;
 import java.security.cert.Certificate;
 
 /**
@@ -47,8 +47,8 @@ public class SampleKeyStoreExtension implements KeyStoreManagerExtension {
     }
 
     @Override
-    public Key getPrivateKey(String tenantDomain) throws IdentityException {
-        Key privateKey;
+    public PrivateKey getPrivateKey(String tenantDomain) throws IdentityException {
+        PrivateKey privateKey;
         if (log.isDebugEnabled()) {
             log.debug("Locating the private key for the tenant: " + tenantDomain);
         }
@@ -60,7 +60,7 @@ public class SampleKeyStoreExtension implements KeyStoreManagerExtension {
                 String ksName = tenantDomain.trim().replace(".", "-");
                 // derive JKS name
                 String jksName = ksName + ".jks";
-                privateKey = keyStoreManager.getPrivateKey(jksName, tenantDomain);
+                privateKey = (PrivateKey) keyStoreManager.getPrivateKey(jksName, tenantDomain);
 
             } else {
                 privateKey = keyStoreManager.getDefaultPrivateKey();
@@ -75,17 +75,16 @@ public class SampleKeyStoreExtension implements KeyStoreManagerExtension {
     }
 
     @Override
-    public Certificate getCertificate(String tenantDomain, String alias) throws IdentityException {
+    public Certificate getCertificate(String tenantDomain) throws IdentityException {
         if (log.isDebugEnabled()) {
-            log.debug("Locating the certificate for the tenant: " + tenantDomain + " ,with alias: " + alias);
+            log.debug("Locating the certificate for the tenant: " + tenantDomain);
         }
         try {
             int tenantId = realmService.getTenantManager().getTenantId(tenantDomain);
             KeyStoreManager keyStoreManager = KeyStoreManager.getInstance(tenantId);
             Certificate cert = keyStoreManager.getDefaultPrimaryCertificate();
             if (log.isDebugEnabled()) {
-                log.debug("Found the certificate for the tenant: " + tenantDomain + " ,with alias: " + alias
-                        + ", Certificate: " + cert);
+                log.debug("Found the certificate for the tenant: " + tenantDomain + ", Certificate: " + cert);
             }
             return cert;
         } catch (UserStoreException e) {

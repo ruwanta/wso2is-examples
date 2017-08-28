@@ -88,6 +88,8 @@
                                        placeholder="Key" disabled="disabled">
                                 <input id="oldNum" name="oldNum" hidden="hidden" value="<%=nextNum%>" />
                                 <input id="callbackUrl" name="callbackUrl" hidden="hidden" value="<%=callbackUrl%>" />
+                                <input id="authenticator" name="authenticator" hidden="hidden"
+                                       value="SampleHardwareKeyAuthenticator">
                             </div>
                             <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 form-group">
                                 <input id="timeBasedId" name="timeBasedId" type="password" class="form-control"

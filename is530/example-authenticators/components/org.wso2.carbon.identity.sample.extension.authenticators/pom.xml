@@ -65,7 +65,7 @@
                             ${project.artifactId}
                         </Bundle-SymbolicName>
                         <Private-Package>
-                            org.wso2.carbon.identity.sample.extension.keystore.internal,
+                            org.wso2.carbon.identity.sample.extension.auth.internal,
                         </Private-Package>
                         <Import-Package>
                             org.osgi.framework; version="${osgi.framework.imp.pkg.version.range}",
@@ -83,9 +83,9 @@
                             org.wso2.carbon.identity.application.common.model;version="${carbon.identity.framework.imp.pkg.version.range}",
                         </Import-Package>
                         <Export-Package>
-                            !org.wso2.carbon.identity.sample.extension.keystore.internal,
-                            org.wso2.carbon.identity.sample.extension.keystore.*;
-                            version="${identity.sample.keystore.exp.version}"
+                            !org.wso2.carbon.identity.sample.extension.auth.internal,
+                            org.wso2.carbon.identity.sample.extension.auth.*;
+                            version="${identity.sample.authenticators.exp.version}"
                         </Export-Package>
                     </instructions>
                 </configuration>

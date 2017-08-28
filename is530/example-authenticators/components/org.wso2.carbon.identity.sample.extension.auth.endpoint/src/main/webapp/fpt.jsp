@@ -80,6 +80,8 @@
                                 <input id="fingerprint" name="f" type="text" value="f"  tabindex="0"
                                        placeholder="Please type f for fingerprint" hidden="hidden">
                                 <input id="callbackUrl" name="callbackUrl" hidden="hidden" value="<%=callbackUrl%>" />
+                                <input id="authenticator" name="authenticator" hidden="hidden"
+                                       value="SampleFingerprintAuthenticator">
                             </div>
 
                             <br>

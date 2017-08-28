@@ -26,10 +26,10 @@
 
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.wso2.carbon.identity.samples</groupId>
-    <artifactId>example-keystore-extension</artifactId>
+    <artifactId>example-authenticators</artifactId>
     <version>0.1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
-    <name>WSO2 Carbon Identity Sample keystore extension</name>
+    <name>WSO2 Carbon Identity Sample (Adaptive)Authenticators</name>
     <url>http://wso2.org</url>
 
     <scm>
@@ -40,10 +40,10 @@
     </scm>
 
     <modules>
-        <module>components/org.wso2.carbon.identity.sample.extension.keystore</module>
+        <module>components/org.wso2.carbon.identity.sample.extension.authenticators</module>
+        <module>components/org.wso2.carbon.identity.sample.extension.auth.endpoint</module>
 
-        <module>features/org.wso2.carbon.identity.sample.extension.keystore.feature</module>
-    
+        <module>features/org.wso2.carbon.identity.sample.extension.auth.feature</module>
     </modules>
 
     <dependencyManagement>
@@ -283,8 +283,8 @@
 
     <properties>
         <!-- Identity Sample Version Version-->
-        <identity.sample.keystore.version>${project.version}</identity.sample.keystore.version>
-        <identity.sample.keystore.exp.version>${project.version}</identity.sample.keystore.exp.version>
+        <identity.sample.authenticators.version>${project.version}</identity.sample.authenticators.version>
+        <identity.sample.authenticators.exp.version>${project.version}</identity.sample.authenticators.exp.version>
 
         <!-- OSGi/Equinox dependency version -->
         <equinox.javax.servlet.version>3.0.0.v201112011016</equinox.javax.servlet.version>

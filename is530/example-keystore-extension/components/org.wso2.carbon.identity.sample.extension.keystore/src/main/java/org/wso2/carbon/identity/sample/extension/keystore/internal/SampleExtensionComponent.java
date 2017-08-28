@@ -23,7 +23,6 @@ import org.apache.commons.logging.LogFactory;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.component.ComponentContext;
 import org.wso2.carbon.identity.core.KeyStoreManagerExtension;
-import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.sample.extension.keystore.SampleKeyStoreExtension;
 import org.wso2.carbon.user.core.service.RealmService;
 
@@ -44,9 +43,8 @@ public class SampleExtensionComponent {
      * @param ctxt
      */
     protected void activate(ComponentContext ctxt) {
-        log.info(
-                "The Sample Key Store extension is activated."
-                        + " Identity server will use this extension instead of the one provided by Carbon framework");
+        log.info("The Sample Key Store extension is activated."
+                + " Identity server will use this extension instead of the one provided by Carbon framework");
         SampleKeyStoreExtension extension = new SampleKeyStoreExtension();
         extension.setRealmService(realmService);
         sampleKeyStoreExtensionServiceRef = ctxt.getBundleContext()
@@ -58,16 +56,14 @@ public class SampleExtensionComponent {
      */
     protected void deactivate(ComponentContext ctxt) {
         sampleKeyStoreExtensionServiceRef.unregister();
-        log.info(
-                "The Sample Key Store extension is de-activated."
-                        + " Identity server will use the one provided by Carbon framework hereafter");
+        log.info("The Sample Key Store extension is de-activated."
+                + " Identity server will use the one provided by Carbon framework hereafter");
     }
 
     /**
      * @param realmService
      */
     protected void setRealmService(RealmService realmService) {
-        IdentityTenantUtil.setRealmService(realmService);
         this.realmService = realmService;
     }
 
@@ -76,6 +72,5 @@ public class SampleExtensionComponent {
      */
     protected void unsetRealmService(RealmService realmService) {
         this.realmService = null;
-        IdentityTenantUtil.setRealmService(null);
     }
 }
