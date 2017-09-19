@@ -1,0 +1,147 @@
+/*
+ * Copyright (c) 2017, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *
+ * WSO2 Inc. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
+package org.wso2.carbon.identity.sample.extension.feedback.listener.mq;
+
+import org.wso2.carbon.identity.sample.extension.feedback.DataSink;
+import org.wso2.carbon.identity.sample.extension.feedback.FeedbackException;
+import org.wso2.carbon.identity.sample.extension.feedback.listener.DataReceiver;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
+import javax.jms.Connection;
+import javax.jms.ConnectionFactory;
+import javax.jms.Destination;
+import javax.jms.JMSException;
+import javax.jms.Message;
+import javax.jms.MessageConsumer;
+import javax.jms.MessageListener;
+import javax.jms.Session;
+import javax.jms.TextMessage;
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+
+public class MqDataReceiver implements DataReceiver {
+
+    private List<DataSink> dataSinkList = new ArrayList<>();
+    private InitialContext jndiContext;
+    private ConnectionFactory connectionFactory;
+    private Destination destination;
+    private Connection connection;
+    private Session session;
+    private String server = "localhost";
+    private String username = "username";
+    private String password = "password";
+    private String queueName = "queueName";
+    private String clientID = "clientID";
+
+    @Override
+    public void init() throws FeedbackException {
+        Properties props = new Properties();
+        props.setProperty(Context.INITIAL_CONTEXT_FACTORY, "org.apache.activemq.jndi.ActiveMQInitialContextFactory");
+        props.setProperty(Context.PROVIDER_URL, "tcp://" + server + ":61616");
+
+        try {
+            jndiContext = new InitialContext(props);
+        } catch (NamingException e) {
+            throw new FeedbackException("Could not initialize the JNDI context", e);
+        }
+        try {
+            connectionFactory = (ConnectionFactory) jndiContext.lookup("ConnectionFactory");
+        } catch (NamingException e) {
+            throw new FeedbackException("Could not lookup connection factory on JNDI context", e);
+        }
+        try {
+            destination = (Destination) jndiContext.lookup("dynamicQueues/" + queueName);
+        } catch (NamingException e) {
+            throw new FeedbackException("Could not lookup connection queue: " + queueName, e);
+        }
+
+        // Connect to MQ
+        try {
+            connection = connectionFactory.createConnection(username, password);
+        } catch (JMSException e) {
+            throw new FeedbackException("Could not connect to queue: " + queueName + ", with user: " + username, e);
+        }
+        try {
+            connection.setClientID(clientID);
+        } catch (JMSException e) {
+            throw new FeedbackException("Could not connect to queue: " + queueName + ", with clientID: " + clientID, e);
+        }
+        // this helps to ensure, that not 2 instances can connect to the broker simultaneously
+        // because it is not allowed to connect to the same broker with the same clientID
+        try {
+            connection.start();
+        } catch (JMSException e) {
+            throw new FeedbackException(
+                    "Could not start the connection to queue: " + queueName + ", with clientID: " + clientID, e);
+        }
+        try {
+            session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+        } catch (JMSException e) {
+            throw new FeedbackException(
+                    "Could not create a session to queue: " + queueName + ", with clientID: " + clientID, e);
+        }
+
+        MessageConsumer subscriber = null;
+        try {
+            subscriber = session.createConsumer(destination);
+        } catch (JMSException e) {
+            throw new FeedbackException(
+                    "Could not create a consumer to the queue: " + queueName + ", with clientID: " + clientID, e);
+        }
+        try {
+            subscriber.setMessageListener(new JmsMessageListener());
+        } catch (JMSException e) {
+            throw new FeedbackException(
+                    "Could not create a consumer to the queue: " + queueName + ", with clientID: " + clientID, e);
+        }
+
+    }
+
+    @Override
+    public void shutdown() throws FeedbackException {
+        try {
+            session.close();
+            connection.close();
+        } catch (JMSException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void register(DataSink dataSink) {
+        dataSinkList.add(dataSink);
+    }
+
+    private class JmsMessageListener implements MessageListener {
+
+        @Override
+        public void onMessage(Message msg) {
+            try {
+                System.out.println(
+                        "Message arrived by consumer-ID : " + clientID + " CONTENT = " + ((TextMessage) msg).getText());
+            } catch (JMSException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+    }
+}
