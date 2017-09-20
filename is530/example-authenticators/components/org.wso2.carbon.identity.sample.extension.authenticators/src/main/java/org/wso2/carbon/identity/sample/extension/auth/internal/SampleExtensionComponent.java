@@ -22,6 +22,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.osgi.service.component.ComponentContext;
 import org.wso2.carbon.identity.application.authentication.framework.ApplicationAuthenticator;
+import org.wso2.carbon.identity.sample.extension.auth.RequestAttributeExtractor;
 import org.wso2.carbon.identity.sample.extension.auth.SampleFingerprintAuthenticator;
 import org.wso2.carbon.identity.sample.extension.auth.SampleHardwareKeyAuthenticator;
 import org.wso2.carbon.identity.sample.extension.auth.SampleRetinaAuthenticator;
@@ -38,17 +39,19 @@ public class SampleExtensionComponent {
      */
     protected void activate(ComponentContext ctxt) {
         log.info("The Sample Authenticator extension is activated."
-                + " Identity server will use this extension instead of the one provided by Carbon framework");
+                + " Provides some sample authenticators for demonstration purposes.");
 
         SampleHardwareKeyAuthenticator sampleHardwareKeyAuthenticator = new SampleHardwareKeyAuthenticator();
         SampleFingerprintAuthenticator sampleFingerprintAuthenticator = new SampleFingerprintAuthenticator();
         SampleRetinaAuthenticator retinaAuthenticator = new SampleRetinaAuthenticator();
+        RequestAttributeExtractor requestAttributeExtractor = new RequestAttributeExtractor();
         ctxt.getBundleContext()
                 .registerService(ApplicationAuthenticator.class.getName(), sampleHardwareKeyAuthenticator, null);
         ctxt.getBundleContext()
                 .registerService(ApplicationAuthenticator.class.getName(), sampleFingerprintAuthenticator, null);
+        ctxt.getBundleContext().registerService(ApplicationAuthenticator.class.getName(), retinaAuthenticator, null);
         ctxt.getBundleContext()
-                .registerService(ApplicationAuthenticator.class.getName(), retinaAuthenticator, null);
+                .registerService(ApplicationAuthenticator.class.getName(), requestAttributeExtractor, null);
     }
 
     /**

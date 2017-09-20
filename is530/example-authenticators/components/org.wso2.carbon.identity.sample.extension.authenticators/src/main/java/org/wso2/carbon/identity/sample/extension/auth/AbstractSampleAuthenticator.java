@@ -67,7 +67,7 @@ public abstract class AbstractSampleAuthenticator implements FederatedApplicatio
 
     private AuthenticatorFlowStatus processAuthenticationResponse(HttpServletRequest request,
             HttpServletResponse response, AuthenticationContext context) {
-        AuthenticatedUser lastUser = context.getLastAuthenticatedUser();
+        AuthenticatedUser lastUser = context.getCurrentSubject();
         String successParam = request.getParameter("success");
         boolean isSuccess = Boolean.parseBoolean(successParam);
         if (isSuccess) {

@@ -18,13 +18,13 @@
 
 package org.wso2.carbon.identity.sample.extension.feedback;
 
-import java.util.List;
 import java.util.Map;
 
 /**
  * Temporal data item.
  */
 public class TemporalData {
+
     private String name;
     private String tenantName;
     private long timeToLive;
@@ -51,5 +51,18 @@ public class TemporalData {
 
     public Map<String, Object> getData() {
         return data;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("{");
+        stringBuilder.append("\"name\" : \"").append(name).append("\",");
+        stringBuilder.append("\"tenantName\" : \"").append(tenantName).append("\",");
+        stringBuilder.append("\"ttl\" : ").append(timeToLive).append(",");
+        stringBuilder.append("\"data\" : ").append(data.toString());
+        stringBuilder.append("}");
+
+        return stringBuilder.toString();
     }
 }

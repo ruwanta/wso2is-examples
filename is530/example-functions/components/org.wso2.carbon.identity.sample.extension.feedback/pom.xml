@@ -73,6 +73,11 @@
             <artifactId>geronimo-jms_1.1_spec</artifactId>
             <version>1.1.0.wso2v1</version>
         </dependency>
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.6.2</version>
+        </dependency>
 
 
         <dependency>
@@ -118,7 +123,7 @@
                     <argLine>${surefireArgLine}</argLine>
                     <!-- Skips unit tests if the value of skip.unit.tests property is true -->
                     <!-- Excludes integration tests when unit tests are run. -->
-                    <excludes>
+                    MqDataReceiver.java<excludes>
                         <exclude>**/IT*.java</exclude>
                     </excludes>
                 </configuration>

@@ -44,14 +44,16 @@ import org.wso2.carbon.identity.sample.extension.feedback.TemporalData;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
  * Holds temporal data for dynamic decisions.
- * TODO: Have a separate Index file for each tenant.
+ * TODO: 1. Have a local file for index, not in memory.
+ * TODO: 2. Have a separate Index file for each tenant.
+ * TODO: 3. Make index write asynchronous
+ * TODO: 4. Have a database for another level of persistence. Index can be recreated once a while. or on demand.
  */
 public class TemporalDataRepo {
 
@@ -126,7 +128,7 @@ public class TemporalDataRepo {
                 Object value = translate(field);
                 data.put(field.name(), value);
             });
-            result.add(new TemporalData(name, tenant, ttl, Collections.emptyNavigableMap()));
+            result.add(new TemporalData(name, tenant, ttl, data));
         }
 
         return result;

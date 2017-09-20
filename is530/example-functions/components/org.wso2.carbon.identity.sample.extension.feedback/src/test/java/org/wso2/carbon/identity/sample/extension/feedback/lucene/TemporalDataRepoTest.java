@@ -24,6 +24,7 @@ import org.testng.annotations.Test;
 import org.wso2.carbon.identity.sample.extension.feedback.TemporalData;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -59,8 +60,33 @@ public class TemporalDataRepoTest {
         Assert.assertEquals(r.size(), 1);
     }
 
+    @Test
+    public void testSearch_Data() throws Exception {
+        TemporalDataRepo repo = new TemporalDataRepo();
+        repo.init();
+
+        TemporalData temporalData = new TemporalData("test", "tt", 100L, getTestMap(new String[]{"key1", "key2", "key3"}, new Object[]{"value1", "value2", "value3"}));
+        repo.save(temporalData);
+
+
+        List<TemporalData> r= repo.search("name : test");
+        Assert.assertNotNull(r);
+        Assert.assertEquals(r.size(), 1);
+
+        TemporalData res1 = r.get(0);
+        Assert.assertEquals(res1.getData().get("key1"), "value1");
+    }
+
     private Map<String, Object> getTestMap() {
         return Collections.emptyMap();
+    }
+
+    private Map<String, Object> getTestMap(String[] keys, Object[] values) {
+        HashMap<String, Object> result = new HashMap<>();
+        for (int i=0; i< keys.length; i++) {
+            result.put(keys[i], values[i]);
+        }
+        return result;
     }
 
 }
