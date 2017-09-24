@@ -28,9 +28,15 @@ import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
 import org.wso2.carbon.identity.application.authentication.framework.JsFunctionRegistry;
+import org.wso2.carbon.identity.sample.extension.feedback.FeedbackException;
+import org.wso2.carbon.identity.sample.extension.feedback.functions.GetFeedbackFunction;
+import org.wso2.carbon.identity.sample.extension.feedback.functions.PublishToAnalyticsFunction;
+import org.wso2.carbon.identity.sample.extension.feedback.listener.mq.MqDataReceiver;
+import org.wso2.carbon.identity.sample.extension.feedback.lucene.TemporalDataRepo;
+import org.wso2.carbon.identity.sample.extension.feedback.publisher.DAS3Publisher;
 
-import java.io.IOException;
-import java.util.function.Function;
+import java.util.Properties;
+import javax.naming.Context;
 
 /**
  * Component to start up Feedback component from analytics.
@@ -38,26 +44,51 @@ import java.util.function.Function;
  * Starts up the indexer.
  * Contribute the analytics functions to Dynamic Authentication System.
  */
-@Component(
-        name = "identity.analytics.feedback.component"
-)
+@Component(name = "identity.analytics.feedback.component")
 public class AnalyticsFeedbackComponent {
+
     private static final Log log = LogFactory.getLog(AnalyticsFeedbackComponent.class);
     private JsFunctionRegistry jsFunctionRegistry;
+    private PublishToAnalyticsFunction publishToAnalyticsFunction;
+    private GetFeedbackFunction getFeedbackFunction;
+    private TemporalDataRepo temporalDataRepo;
+    private DAS3Publisher analyticsPublisher;
+    private MqDataReceiver mqDataReceiver;
 
     @Activate
     protected void activate(ComponentContext ctxt) {
+        analyticsPublisher = new DAS3Publisher();
+        analyticsPublisher.init();
+        publishToAnalyticsFunction = new PublishToAnalyticsFunction(analyticsPublisher);
 
+        temporalDataRepo = new TemporalDataRepo();
+        getFeedbackFunction = new GetFeedbackFunction(temporalDataRepo);
+
+        jsFunctionRegistry.register(JsFunctionRegistry.Subsystem.SEQUENCE_HANDLER, "getFeedback", getFeedbackFunction);
+        jsFunctionRegistry.register(JsFunctionRegistry.Subsystem.SEQUENCE_HANDLER, "publishAnalytics",
+                publishToAnalyticsFunction);
+
+        mqDataReceiver = newReceiver();
+
+        log.info("Analytics Feedback Component Activated");
     }
 
     @Deactivate
     protected void deactivate(ComponentContext ctxt) {
         if (jsFunctionRegistry != null) {
-            jsFunctionRegistry.deRegister(JsFunctionRegistry.Subsystem.SEQUENCE_HANDLER, "getUserAgent");
+            jsFunctionRegistry.deRegister(JsFunctionRegistry.Subsystem.SEQUENCE_HANDLER, "getFeedback");
+            jsFunctionRegistry.deRegister(JsFunctionRegistry.Subsystem.SEQUENCE_HANDLER, "publishAnalytics");
         }
+        if (analyticsPublisher != null) {
+            analyticsPublisher.shutDown();
+        }
+        log.info("Analytics Feedback Component De-activated");
     }
 
-    @Reference(service = JsFunctionRegistry.class, cardinality = ReferenceCardinality.MANDATORY, policy = ReferencePolicy.DYNAMIC, unbind = "unsetJsFunctionRegistry")
+    @Reference(service = JsFunctionRegistry.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetJsFunctionRegistry")
     public void setJsFunctionRegistry(JsFunctionRegistry jsFunctionRegistry) {
         this.jsFunctionRegistry = jsFunctionRegistry;
     }
@@ -66,4 +97,28 @@ public class AnalyticsFeedbackComponent {
         this.jsFunctionRegistry = null;
     }
 
+    private MqDataReceiver newReceiver() {
+        final String MQ_URL = "vm://localhost?broker.persistent=false";
+        final String TEST_QUENAME = "TEST_Q_1";
+        final String TEST_SERVER = "localhost";
+        final int TEST_PORT = 61616;
+
+        Properties props = new Properties();
+        props.setProperty(Context.INITIAL_CONTEXT_FACTORY, "org.apache.activemq.jndi.ActiveMQInitialContextFactory");
+        props.setProperty(Context.PROVIDER_URL, "tcp://" + TEST_SERVER + ":" + TEST_PORT);
+        props.setProperty(Context.PROVIDER_URL, MQ_URL);
+        props.setProperty(MqDataReceiver.QUEUE_NAME, TEST_QUENAME);
+
+        log.info("Starting ActiveMQ receiver");
+        MqDataReceiver receiver = new MqDataReceiver(props);
+        try {
+            receiver.init();
+        } catch (FeedbackException e) {
+            log.error("Could not start MQ receiver.", e);
+        }
+        log.info("ActiveMQ receiver started");
+
+        return receiver;
+
+    }
 }

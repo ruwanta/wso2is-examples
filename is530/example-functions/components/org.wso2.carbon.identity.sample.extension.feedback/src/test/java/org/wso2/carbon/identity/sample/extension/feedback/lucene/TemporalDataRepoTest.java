@@ -18,7 +18,6 @@
 
 package org.wso2.carbon.identity.sample.extension.feedback.lucene;
 
-import edu.emory.mathcs.backport.java.util.Arrays;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import org.wso2.carbon.identity.sample.extension.feedback.TemporalData;
@@ -54,8 +53,7 @@ public class TemporalDataRepoTest {
         TemporalData temporalData = new TemporalData("test", "tt", 100L, getTestMap());
         repo.save(temporalData);
 
-
-        List<TemporalData> r= repo.search("name : test");
+        List<TemporalData> r = repo.search("name : test");
         Assert.assertNotNull(r);
         Assert.assertEquals(r.size(), 1);
     }
@@ -65,16 +63,27 @@ public class TemporalDataRepoTest {
         TemporalDataRepo repo = new TemporalDataRepo();
         repo.init();
 
-        TemporalData temporalData = new TemporalData("test", "tt", 100L, getTestMap(new String[]{"key1", "key2", "key3"}, new Object[]{"value1", "value2", "value3"}));
+        TemporalData temporalData = new TemporalData("test", "tt", 100L,
+                getTestMap(new String[] { "key1", "key2", "key3" }, new Object[] { "value1", "value2", "value3" }));
         repo.save(temporalData);
 
-
-        List<TemporalData> r= repo.search("name : test");
+        List<TemporalData> r = repo.search("name : test");
         Assert.assertNotNull(r);
         Assert.assertEquals(r.size(), 1);
 
         TemporalData res1 = r.get(0);
         Assert.assertEquals(res1.getData().get("key1"), "value1");
+
+        r = repo.search("key1 : value1");
+        Assert.assertNotNull(r);
+        Assert.assertEquals(r.size(), 1);
+
+        res1 = r.get(0);
+        Assert.assertEquals(res1.getData().get("key1"), "value1");
+
+        r = repo.search("key1 : value1");
+        Assert.assertNotNull(r, "Non matching query should return empty list");
+        Assert.assertEquals(r.size(), 1, "Non matching query should return empty list");
     }
 
     private Map<String, Object> getTestMap() {
@@ -83,7 +92,7 @@ public class TemporalDataRepoTest {
 
     private Map<String, Object> getTestMap(String[] keys, Object[] values) {
         HashMap<String, Object> result = new HashMap<>();
-        for (int i=0; i< keys.length; i++) {
+        for (int i = 0; i < keys.length; i++) {
             result.put(keys[i], values[i]);
         }
         return result;

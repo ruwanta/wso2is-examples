@@ -21,16 +21,15 @@ package org.wso2.carbon.identity.sample.extension.feedback.lucene;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
-import org.apache.lucene.document.FloatPoint;
-import org.apache.lucene.document.IntPoint;
-import org.apache.lucene.document.LongPoint;
+import org.apache.lucene.document.FloatField;
+import org.apache.lucene.document.IntField;
+import org.apache.lucene.document.LongField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.IndexableField;
-import org.apache.lucene.index.IndexableFieldType;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
@@ -79,7 +78,7 @@ public class TemporalDataRepo {
         Document doc = new Document();
         doc.add(new TextField(NAME_FIELD, temporalData.getName(), Field.Store.YES));
         doc.add(new TextField(TENANT_FIELD, temporalData.getTenantName(), Field.Store.YES));
-        doc.add(new LongPoint(TTL_FIELD, temporalData.getTimeToLive()));
+        doc.add(new LongField(TTL_FIELD, temporalData.getTimeToLive(), Field.Store.YES));
         for (Map.Entry<String, Object> entry : temporalData.getData().entrySet()) {
             Field field = translate(entry.getKey(), entry.getValue());
             doc.add(field);
@@ -97,9 +96,9 @@ public class TemporalDataRepo {
         if (value instanceof String) {
             field = new TextField(key, (String) value, Field.Store.YES);
         } else if (value instanceof Integer) {
-            field = new IntPoint(key, (Integer) value);
+            field = new IntField(key, (Integer) value, Field.Store.YES);
         } else if (value instanceof Float) {
-            field = new FloatPoint(key, (Integer) value);
+            field = new FloatField(key, (Integer) value, Field.Store.YES);
         }
 
         if (field == null) {
@@ -119,10 +118,9 @@ public class TemporalDataRepo {
         int num = 0;
         for (ScoreDoc sd : hits.scoreDocs) {
             Document d = searcher.doc(sd.doc);
-            System.out.println(String.format("#%d: %s (ttl=%s)", ++num, d.get("name"), d.get("ttl")));
             String name = translate(d.getField(NAME_FIELD), null);
             String tenant = translate(d.getField(TENANT_FIELD), null);
-            long ttl = translate(d.getField(TTL_FIELD), -1);
+            long ttl = translate(d.getField(TTL_FIELD), -1L);
             Map<String, Object> data = new HashMap<>();
             d.iterator().forEachRemaining(field -> {
                 Object value = translate(field);
@@ -142,19 +140,11 @@ public class TemporalDataRepo {
     }
 
     private <T extends Object> T translate(IndexableField field) {
-        IndexableFieldType type = field.fieldType();
-
-        Object result = null;
-        switch (type.docValuesType()) {
-        case NONE:
-            result = field.stringValue();
-            break;
-        case NUMERIC:
-            result = field.numericValue();
-            break;
-        default:
+        Object result = field.numericValue();
+        if(result == null) {
             result = field.stringValue();
         }
+
         return (T) result;
     }
 

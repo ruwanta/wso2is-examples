@@ -28,7 +28,11 @@ import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
 import org.wso2.carbon.identity.application.authentication.framework.JsFunctionRegistry;
+import org.wso2.carbon.identity.application.authentication.framework.adaptive.HttpInPropertyExtractorFunction;
+import org.wso2.carbon.identity.sample.extension.js.functions.GetHeaderFunction;
+import org.wso2.carbon.identity.sample.extension.js.functions.GetPropertyFunction;
 import org.wso2.carbon.identity.sample.extension.js.functions.GetUserAgentFunction;
+import org.wso2.carbon.identity.sample.extension.js.functions.HttpHeadersExtractorFunction;
 import org.wso2.carbon.identity.sample.extension.js.functions.ua.RemoteUserAgent;
 import ua_parser.Parser;
 
@@ -42,6 +46,8 @@ public class CustomFunctionsComponent {
 
     private JsFunctionRegistry jsFunctionRegistry;
     private GetUserAgentFunction getUserAgentFunction;
+    private GetHeaderFunction getHeaderFunction;
+    private HttpHeadersExtractorFunction httpHeadersExtractorFunction;
     private Parser parser;
 
     @Activate
@@ -53,6 +59,12 @@ public class CustomFunctionsComponent {
                 getUserAgentFunction = new GetUserAgentFunction(parser);
                 jsFunctionRegistry.register(JsFunctionRegistry.Subsystem.SEQUENCE_HANDLER, "getUserAgent",
                         (Function<String, RemoteUserAgent>) getUserAgentFunction::getUserAgent);
+                getHeaderFunction = new GetHeaderFunction();
+                jsFunctionRegistry.register(JsFunctionRegistry.Subsystem.SEQUENCE_HANDLER, "getHttpHeader",
+                        (GetPropertyFunction) getHeaderFunction::getProperty);
+                httpHeadersExtractorFunction = new HttpHeadersExtractorFunction();
+                jsFunctionRegistry.register(JsFunctionRegistry.Subsystem.HTTP_IN_HANDLER, "extractHeaders",
+                        (HttpInPropertyExtractorFunction) httpHeadersExtractorFunction::handle);
             } catch (IOException e) {
                 log.error("Error while initializing User Agent Parser."
                         + " Javascript contributed function \"getUserAgent(str)\" will not be available. ", e);
@@ -67,7 +79,10 @@ public class CustomFunctionsComponent {
         }
     }
 
-    @Reference(service = JsFunctionRegistry.class, cardinality = ReferenceCardinality.MANDATORY, policy = ReferencePolicy.DYNAMIC, unbind = "unsetJsFunctionRegistry")
+    @Reference(service = JsFunctionRegistry.class,
+               cardinality = ReferenceCardinality.MANDATORY,
+               policy = ReferencePolicy.DYNAMIC,
+               unbind = "unsetJsFunctionRegistry")
     public void setJsFunctionRegistry(JsFunctionRegistry jsFunctionRegistry) {
         this.jsFunctionRegistry = jsFunctionRegistry;
     }
