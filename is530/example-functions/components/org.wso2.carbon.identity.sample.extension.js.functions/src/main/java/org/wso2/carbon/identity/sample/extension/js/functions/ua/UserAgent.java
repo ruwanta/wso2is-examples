@@ -70,4 +70,9 @@ public class UserAgent extends AbstractJSObject {
         //Do not allow any parameter change. These are read-only.
         return;
     }
+
+    @Override
+    public Object getDefaultValue(Class cls)  {
+        return agent.family + "/" + agent.major + "." + agent.minor;
+    }
 }

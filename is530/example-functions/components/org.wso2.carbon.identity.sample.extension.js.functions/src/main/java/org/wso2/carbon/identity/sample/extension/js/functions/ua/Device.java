@@ -68,4 +68,8 @@ public class Device extends AbstractJSObject {
         return;
     }
 
+    @Override
+    public Object getDefaultValue(Class cls) {
+        return device.family;
+    }
 }

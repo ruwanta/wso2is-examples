@@ -88,4 +88,9 @@ public class RemoteUserAgent extends AbstractJSObject {
         //Do not allow any parameter change. These are read-only.
         return;
     }
+
+    @Override
+    public Object getDefaultValue(Class cls) {
+        return uaString;
+    }
 }

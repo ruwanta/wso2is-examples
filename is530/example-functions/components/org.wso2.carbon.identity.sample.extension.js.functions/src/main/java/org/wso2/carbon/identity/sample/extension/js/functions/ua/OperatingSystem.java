@@ -71,4 +71,9 @@ public class OperatingSystem extends AbstractJSObject {
         //Do not allow any parameter change. These are read-only.
         return;
     }
+
+    @Override
+    public Object getDefaultValue(Class cls) {
+        return os.family + "/" + os.major + "." + os.minor;
+    }
 }
